@@ -4,19 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:client": "cd byte-gear-client && npm run dev",
-    "dev:server": "cd byte-gear-server && npm run start:dev",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run start:dev",
     "build": "concurrently \"npm run build:server\" \"npm run build:client\"",
-    "build:client": "cd byte-gear-client && npm run build",
-    "build:server": "cd byte-gear-server && npm run build",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
     "start": "concurrently \"npm run start:server\" \"npm run start:client\"",
-    "start:client": "cd byte-gear-client && npm run start",
-    "start:server": "cd byte-gear-server && npm run start:prod",
-    "install:all": "npm install && cd byte-gear-client && npm install && cd ../byte-gear-server && npm install",
-    "clean": "rm -rf byte-gear-client/node_modules byte-gear-server/node_modules node_modules",
+    "start:client": "cd client && npm run start",
+    "start:server": "cd server && npm run start:prod",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "clean": "rm -rf client/node_modules server/node_modules node_modules",
     "lint": "concurrently \"npm run lint:client\" \"npm run lint:server\"",
-    "lint:client": "cd byte-gear-client && npm run lint",
-    "lint:server": "cd byte-gear-server && npm run lint"
+    "lint:client": "cd client && npm run lint",
+    "lint:server": "cd server && npm run lint"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

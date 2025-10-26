@@ -143,6 +143,17 @@ export class ProductController {
     @Query('category') category?: string,
     @Query('attributes') attributesRaw?: string,
   ) {
+    console.log(
+      'findAll',
+      page,
+      limit,
+      event,
+      search,
+      sortBy,
+      fields,
+      category,
+      attributesRaw,
+    );
     return this.productService.findAll({
       page: Number(page),
       limit: Number(limit),
