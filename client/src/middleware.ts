@@ -10,10 +10,7 @@ const SETTINGS_PATH = /^\/settings(\/|$)/;
 
 const SETTINGS_ROLE = USER_ROLE.CUSTOMER;
 
-// SECURITY: JWT_SECRET should NOT be NEXT_PUBLIC_* (would expose to browser)
-// This middleware runs on Next.js server edge, so we can use private env vars
-// Support both JWT_SECRET and JWT_SECRET_KEY (match server naming)
-const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_SECRET_KEY;
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 /**
  * Safely decodes and verifies JWT token
@@ -24,13 +21,18 @@ const verifyToken = (token: string): { role?: string; sub?: string } | null => {
   try {
     // SECURITY FIX: Use jwt.verify() instead of jwt.decode()
     // jwt.decode() does NOT validate signature - allows forged tokens!
-    if (!JWT_SECRET) {
-      console.error("JWT_SECRET not configured - falling back to decode only (INSECURE)");
+    if (!JWT_SECRET_KEY) {
+      console.error(
+        "JWT_SECRET not configured - falling back to decode only (INSECURE)"
+      );
       // Fallback to decode if secret not set (dev only)
       return jwt.decode(token) as { role?: string; sub?: string } | null;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { role?: string; sub?: string };
+    const decoded = jwt.verify(token, JWT_SECRET_KEY) as {
+      role?: string;
+      sub?: string;
+    };
     return decoded;
   } catch (error) {
     // Token is invalid, expired, or signature mismatch

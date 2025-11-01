@@ -87,7 +87,8 @@ npm run install:all
 
 ### Configuration
 
-> **🔒 SECURITY NOTE**: The JWT_SECRET/JWT_SECRET_KEY environment variable is **critical for security**.
+> **🔒 SECURITY NOTE**: The JWT_SECRET_KEY environment variable is **critical for security**.
+>
 > - It must be the **same value** in both client and server `.env` files
 > - Generate a strong secret: `openssl rand -hex 64`
 > - Never commit `.env` files to version control (already in `.gitignore`)
@@ -105,7 +106,7 @@ PORT=8000
 MONGO_URI=mongodb://localhost:27017/byte-gear
 
 # JWT
-JWT_SECRET=your-jwt-secret
+JWT_SECRET_KEY=your-jwt-secret
 JWT_EXPIRATION=7d
 
 # Google OAuth
@@ -136,8 +137,7 @@ Create `.env.local` file in `client/` directory:
 NEXT_PUBLIC_API_URL=http://localhost:8000/api
 NEXT_PUBLIC_SOCKET_URL=http://localhost:8000
 
-# CRITICAL: Must match server JWT_SECRET_KEY
-JWT_SECRET=your-jwt-secret-here-must-match-server
+JWT_SECRET_KEY=your-jwt-secret-here-must-match-server
 ```
 
 **Note**: Use `.env.example` files in both directories as templates.
