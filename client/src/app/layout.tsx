@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import { NuqsProvider } from "@/components/providers/nuqs-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ErrorBoundaryWrapper } from "@/components/providers/error-boundary-wrapper";
 import { ResetStepGuard } from "@/components/guards/reset-step-guard";
 
 const manrope = Manrope({
@@ -40,15 +41,17 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${manrope.variable} antialiased`}>
-        <QueryProvider>
-          <NuqsProvider>
-            <ResetStepGuard>
-              <Modals />
-              <Toaster />
-              {children}
-            </ResetStepGuard>
-          </NuqsProvider>
-        </QueryProvider>
+        <ErrorBoundaryWrapper>
+          <QueryProvider>
+            <NuqsProvider>
+              <ResetStepGuard>
+                <Modals />
+                <Toaster />
+                {children}
+              </ResetStepGuard>
+            </NuqsProvider>
+          </QueryProvider>
+        </ErrorBoundaryWrapper>
       </body>
     </html>
   );
