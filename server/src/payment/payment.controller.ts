@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { JwtGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -28,6 +29,7 @@ export class PaymentController {
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
   @ApiBody({ type: CreatePaymentDto })
+  @Throttle({ short: { limit: 5, ttl: 60000 } }) // 5 payment attempts per minute
   createPayment(@Body() dto: CreatePaymentDto, @Req() req: Request) {
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
