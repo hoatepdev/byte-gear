@@ -45,3 +45,10 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+// Database Indexes for Performance Optimization
+// email already has unique index from @Prop({ unique: true })
+UserSchema.index({ role: 1 }); // For filtering users by role (admin queries)
+UserSchema.index({ status: 1 }); // For filtering by account status
+UserSchema.index({ createdAt: -1 }); // For sorting by registration date (newest first)
+UserSchema.index({ role: 1, status: 1 }); // Compound index for admin dashboards

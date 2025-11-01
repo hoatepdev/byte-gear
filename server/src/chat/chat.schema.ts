@@ -30,3 +30,15 @@ export class Chat {
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);
 export type ChatDocument = Chat & Document<Types.ObjectId>;
+
+// Database Indexes for Performance Optimization
+ChatSchema.index({ roomId: 1 }); // Get all messages in a room (most common query)
+ChatSchema.index({ userId: 1 }); // Get messages from a specific user
+ChatSchema.index({ createdAt: -1 }); // Sort messages by time (newest first)
+ChatSchema.index({ isRead: 1 }); // Filter unread messages
+ChatSchema.index({ isDeleted: 1 }); // Exclude deleted messages
+
+// Compound indexes for common query patterns
+ChatSchema.index({ roomId: 1, createdAt: 1 }); // Room messages sorted chronologically
+ChatSchema.index({ roomId: 1, isRead: 1 }); // Unread messages in a room
+ChatSchema.index({ userId: 1, isDeleted: 1 }); // User's active messages

@@ -32,3 +32,7 @@ export class Category extends Document {
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
+
+// Database Indexes for Performance Optimization
+CategorySchema.index({ name: 1 }, { unique: true }); // Unique category names
+CategorySchema.index({ createdAt: -1 }); // Sort by creation date

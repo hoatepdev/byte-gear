@@ -104,3 +104,23 @@ export class Product {
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
+
+// Database Indexes for Performance Optimization
+ProductSchema.index({ slug: 1 }, { unique: true }); // Unique slug for SEO URLs
+ProductSchema.index({ category: 1 }); // Filter by category (most common query)
+ProductSchema.index({ price: 1 }); // Sort by price (low to high)
+ProductSchema.index({ price: -1 }); // Sort by price (high to low)
+ProductSchema.index({ averageRating: -1 }); // Sort by rating (highest first)
+ProductSchema.index({ soldQuantity: -1 }); // Sort by popularity/best sellers
+ProductSchema.index({ createdAt: -1 }); // Sort by newest products
+ProductSchema.index({ event: 1 }); // Filter by promotional events
+ProductSchema.index({ stock: 1 }); // Check stock availability
+
+// Compound indexes for common query patterns
+ProductSchema.index({ category: 1, price: 1 }); // Category + price filter
+ProductSchema.index({ category: 1, averageRating: -1 }); // Category + top rated
+ProductSchema.index({ category: 1, soldQuantity: -1 }); // Category + best sellers
+ProductSchema.index({ event: 1, createdAt: -1 }); // Event products sorted by date
+
+// Text search index for product name and description
+ProductSchema.index({ name: 'text', description: 'text' }); // Full-text search

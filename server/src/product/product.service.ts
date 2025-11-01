@@ -165,9 +165,6 @@ export class ProductService {
       this.productModel.countDocuments(filter),
     ]);
 
-    console.log('data', data, skip, limit);
-    console.log('total', total);
-
     return {
       page,
       limit,

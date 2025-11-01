@@ -22,3 +22,8 @@ export class Blog {
 }
 
 export const BlogSchema = SchemaFactory.createForClass(Blog);
+
+// Database Indexes for Performance Optimization
+// slug already has unique index from @Prop({ unique: true })
+BlogSchema.index({ createdAt: -1 }); // Sort by newest blogs
+BlogSchema.index({ title: 'text', summary: 'text', description: 'text' }); // Full-text search

@@ -66,3 +66,17 @@ export class Order {
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
+
+// Database Indexes for Performance Optimization
+// orderCode already has unique index from @Prop({ unique: true })
+OrderSchema.index({ userId: 1 }); // Get all orders for a user (my orders page)
+OrderSchema.index({ orderStatus: 1 }); // Filter by order status (admin dashboard)
+OrderSchema.index({ paymentStatus: 1 }); // Filter by payment status
+OrderSchema.index({ createdAt: -1 }); // Sort by order date (newest first)
+OrderSchema.index({ totalAmount: -1 }); // Sort by order value (highest first)
+
+// Compound indexes for common query patterns
+OrderSchema.index({ userId: 1, createdAt: -1 }); // User's orders sorted by date
+OrderSchema.index({ orderStatus: 1, createdAt: -1 }); // Admin: orders by status + date
+OrderSchema.index({ paymentStatus: 1, orderStatus: 1 }); // Admin: payment + order status
+OrderSchema.index({ userId: 1, orderStatus: 1 }); // User: filter their orders by status
