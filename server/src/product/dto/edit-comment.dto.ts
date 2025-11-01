@@ -1,11 +1,13 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { PartialType } from '@nestjs/swagger';
 
-import { CreateProductDto } from './create-product.dto';
+export class EditCommentDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  content: string;
 
-export class UpdateProductDto extends PartialType(CreateProductDto) {
   @ApiPropertyOptional({
     type: [String],
     description: 'Array of existing image URLs to keep',

@@ -31,6 +31,12 @@ import { JwtGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { QueryProductDto } from './dto/query-product.dto';
+import { QueryRelatedProductDto } from './dto/query-related-product.dto';
+import { ReplyCommentDto } from './dto/reply-comment.dto';
+import { EditCommentDto } from './dto/edit-comment.dto';
 
 @ApiTags('Products')
 @Controller('products')
@@ -43,39 +49,9 @@ export class ProductController {
   @UseGuards(JwtGuard, RolesGuard)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('images', 10, { storage: memoryStorage() }))
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        slug: { type: 'string' },
-        category: { type: 'string' },
-        price: { type: 'number' },
-        discountPrice: { type: 'number' },
-        discountPercent: { type: 'number' },
-        description: { type: 'string' },
-        attributes: { type: 'string' },
-        stock: { type: 'number', minimum: 0 },
-        events: { type: 'string' },
-        images: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
-          minItems: 1,
-        },
-      },
-      required: [
-        'name',
-        'slug',
-        'category',
-        'price',
-        'attributes',
-        'images',
-        'stock',
-      ],
-    },
-  })
-  create(@Body() body: any, @UploadedFiles() files: Express.Multer.File[]) {
-    return this.productService.create(body, files);
+  @ApiBody({ type: CreateProductDto })
+  create(@Body() dto: CreateProductDto, @UploadedFiles() files: Express.Multer.File[]) {
+    return this.productService.create(dto, files);
   }
 
   @Put(':id')
@@ -85,97 +61,41 @@ export class ProductController {
   @ApiConsumes('multipart/form-data')
   @ApiParam({ name: 'id', required: true })
   @UseInterceptors(FilesInterceptor('images', 10, { storage: memoryStorage() }))
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        slug: { type: 'string' },
-        category: { type: 'string' },
-        price: { type: 'number' },
-        discountPrice: { type: 'number' },
-        discountPercent: { type: 'number' },
-        description: { type: 'string' },
-        attributes: { type: 'string' },
-        oldImages: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'Keep existing image URLs',
-        },
-        images: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
-        },
-        stock: { type: 'number', description: 'Quantity in stock' },
-      },
-    },
-  })
+  @ApiBody({ type: UpdateProductDto })
   update(
     @Param('id') id: string,
-    @Body() body: any,
+    @Body() dto: UpdateProductDto,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.productService.update(id, body, files);
+    return this.productService.update(id, dto, files);
   }
 
   @Get()
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiQuery({ name: 'sortBy', required: false, type: String })
-  @ApiQuery({ name: 'fields', required: false, type: String })
-  @ApiQuery({ name: 'category', required: false, type: String })
-  @ApiQuery({ name: 'event', required: false, type: String })
-  @ApiQuery({
-    name: 'attributes',
-    required: false,
-    type: String,
-    description: `Dynamic attribute filters as key=value1,value2
-    Example: ?attributes=brand=Razer,ASUS;size=24,15`,
-  })
-  async findAll(
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
-    @Query('event') event?: string,
-    @Query('search') search?: string,
-    @Query('sortBy') sortBy?: string,
-    @Query('fields') fields?: string,
-    @Query('category') category?: string,
-    @Query('attributes') attributesRaw?: string,
-  ) {
+  async findAll(@Query() query: QueryProductDto) {
     return this.productService.findAll({
-      page: Number(page),
-      limit: Number(limit),
-      search,
-      sortBy,
-      fields,
-      category,
-      event,
-      attributesRaw,
+      page: query.page || 1,
+      limit: query.limit || 10,
+      search: query.search,
+      sortBy: query.sortBy,
+      fields: query.fields,
+      category: query.category,
+      event: query.event,
+      attributesRaw: query.attributes,
     });
   }
 
   @Get('related/:id')
   @ApiParam({ name: 'id', required: true })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiQuery({ name: 'sortBy', required: false, type: String })
-  @ApiQuery({ name: 'fields', required: false, type: String })
   findRelated(
     @Param('id') id: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
-    @Query('search') search?: string,
-    @Query('sortBy') sortBy?: string,
-    @Query('fields') fields?: string,
+    @Query() query: QueryRelatedProductDto,
   ) {
     return this.productService.findRelated(id, {
-      page: Number(page),
-      limit: Number(limit),
-      search,
-      sortBy,
-      fields,
+      page: query.page || 1,
+      limit: query.limit || 10,
+      search: query.search,
+      sortBy: query.sortBy,
+      fields: query.fields,
     });
   }
 
@@ -247,24 +167,11 @@ export class ProductController {
   @UseGuards(JwtGuard)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('images', 10, { storage: memoryStorage() }))
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        content: { type: 'string' },
-        images: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
-          minItems: 0,
-        },
-      },
-      required: ['content'],
-    },
-  })
+  @ApiBody({ type: ReplyCommentDto })
   async replyComment(
     @Param('productId') productId: string,
     @Param('commentId') parentCommentId: string,
-    @Body() body: { content: string },
+    @Body() dto: ReplyCommentDto,
     @UploadedFiles() files: Express.Multer.File[],
     @Request() req,
   ) {
@@ -273,7 +180,7 @@ export class ProductController {
       productId,
       parentCommentId,
       userId,
-      body.content,
+      dto.content,
       files,
     );
   }
@@ -283,29 +190,11 @@ export class ProductController {
   @UseGuards(JwtGuard)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('images', 10, { storage: memoryStorage() }))
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        content: { type: 'string' },
-        images: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
-          minItems: 0,
-        },
-        oldImages: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'Danh sách URL ảnh giữ lại',
-        },
-      },
-      required: ['content'],
-    },
-  })
+  @ApiBody({ type: EditCommentDto })
   async editComment(
     @Param('productId') productId: string,
     @Param('commentId') commentId: string,
-    @Body() body: { content: string; oldImages?: string[] },
+    @Body() dto: EditCommentDto,
     @UploadedFiles() files: Express.Multer.File[],
     @Request() req,
   ) {
@@ -314,9 +203,9 @@ export class ProductController {
       productId,
       commentId,
       userId,
-      body.content,
+      dto.content,
       files,
-      body.oldImages || [],
+      dto.oldImages || [],
     );
   }
 

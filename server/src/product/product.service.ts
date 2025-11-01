@@ -7,6 +7,8 @@ import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import { Product, ProductDocument } from './product.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
@@ -17,7 +19,7 @@ export class ProductService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(body: any, files: Express.Multer.File[]) {
+  async create(dto: CreateProductDto, files: Express.Multer.File[]) {
     if (!files || files.length === 0) {
       throw new BadRequestException('Please upload at least one image');
     }
@@ -25,9 +27,9 @@ export class ProductService {
     let parsedAttributes: Record<string, any>;
     try {
       parsedAttributes =
-        typeof body.attributes === 'string'
-          ? JSON.parse(body.attributes)
-          : body.attributes;
+        typeof dto.attributes === 'string'
+          ? JSON.parse(dto.attributes)
+          : dto.attributes;
     } catch {
       throw new BadRequestException('"attributes" field must be valid JSON');
     }
@@ -37,7 +39,7 @@ export class ProductService {
     );
 
     const productData = {
-      ...body,
+      ...dto,
       attributes: parsedAttributes,
       images: uploadedImages.map((img) => img.secure_url),
     };
@@ -46,26 +48,20 @@ export class ProductService {
     return product.save();
   }
 
-  async update(id: string, body: any, files: Express.Multer.File[]) {
-    let parsedAttributes: Record<string, any>;
-    try {
-      parsedAttributes =
-        typeof body.attributes === 'string'
-          ? JSON.parse(body.attributes)
-          : body.attributes;
-    } catch {
-      throw new BadRequestException('"attributes" field must be valid JSON');
+  async update(id: string, dto: UpdateProductDto, files: Express.Multer.File[]) {
+    let parsedAttributes: Record<string, any> | undefined;
+    if (dto.attributes) {
+      try {
+        parsedAttributes =
+          typeof dto.attributes === 'string'
+            ? JSON.parse(dto.attributes)
+            : dto.attributes;
+      } catch {
+        throw new BadRequestException('"attributes" field must be valid JSON');
+      }
     }
 
-    let oldImages: string[] = [];
-    try {
-      oldImages =
-        typeof body.oldImages === 'string'
-          ? JSON.parse(body.oldImages)
-          : body.oldImages || [];
-    } catch {
-      oldImages = [];
-    }
+    const oldImages = dto.oldImages || [];
 
     const newImages = files?.length
       ? await Promise.all(
@@ -78,11 +74,14 @@ export class ProductService {
       ...newImages.map((img) => img.secure_url),
     ];
 
-    const updateData = {
-      ...body,
-      attributes: parsedAttributes,
+    const updateData: any = {
+      ...dto,
       images: updatedImages,
     };
+
+    if (parsedAttributes !== undefined) {
+      updateData.attributes = parsedAttributes;
+    }
 
     const updated = await this.productModel.findByIdAndUpdate(id, updateData, {
       new: true,

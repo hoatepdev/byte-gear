@@ -2,9 +2,9 @@ import {
   Min,
   IsString,
   IsNumber,
-  IsObject,
   IsOptional,
   IsNotEmpty,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -13,11 +13,13 @@ export class CreateProductDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MinLength(1)
   name: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MinLength(1)
   slug: string;
 
   @ApiProperty()
@@ -28,31 +30,36 @@ export class CreateProductDto {
   @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   @Type(() => Number)
   price: number;
 
   @ApiPropertyOptional()
-  @IsNumber()
   @IsOptional()
+  @IsNumber()
+  @Min(0)
   @Type(() => Number)
   discountPrice?: number;
 
   @ApiPropertyOptional()
-  @IsNumber()
   @IsOptional()
+  @IsNumber()
+  @Min(0)
   @Type(() => Number)
   discountPercent?: number;
 
   @ApiPropertyOptional()
-  @IsString()
   @IsOptional()
+  @IsString()
   description?: string;
 
-  @ApiProperty()
-  @IsObject()
+  @ApiProperty({
+    description:
+      'JSON string of attributes object. Example: {"brand":"Razer","color":"Black"}',
+  })
+  @IsString()
   @IsNotEmpty()
-  @Type(() => Object)
-  attributes: Record<string, any>;
+  attributes: string;
 
   @ApiProperty({
     default: 0,
@@ -64,7 +71,7 @@ export class CreateProductDto {
   stock: number;
 
   @ApiPropertyOptional()
-  @IsString()
   @IsOptional()
+  @IsString()
   event?: string;
 }
