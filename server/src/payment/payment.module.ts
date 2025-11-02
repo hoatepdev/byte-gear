@@ -10,12 +10,16 @@ import paymentConfig from './config/payment.config';
 import { PaymentService } from './payment.service';
 import { PaymentController } from './payment.controller';
 import { Order, OrderSchema } from 'src/order/order.schema';
+import { Product, ProductSchema } from 'src/product/product.schema';
 
 @Module({
   imports: [
     OrdersModule,
     ProductModule,
-    MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
+    MongooseModule.forFeature([
+      { name: Order.name, schema: OrderSchema },
+      { name: Product.name, schema: ProductSchema },
+    ]),
     ConfigModule.forFeature(paymentConfig),
   ],
   controllers: [PaymentController],
