@@ -263,6 +263,30 @@ byte-gear/
 
 Required environment variables are listed in the configuration section above. Make sure to set up all credentials before running the application.
 
+### Environment Variable Validation
+
+The backend includes **automatic environment variable validation** using Joi schema validation. The application will fail to start if:
+
+- Required environment variables are missing
+- Environment variables have invalid formats (e.g., invalid URLs, MongoDB connection strings)
+- JWT secrets are less than 32 characters (security requirement)
+- Email addresses are malformed
+
+**Validation Features:**
+- ✅ Fails fast on startup with clear error messages
+- ✅ Shows all validation errors at once (not just the first)
+- ✅ Validates format, length, and required fields
+- ✅ Provides helpful error messages for each validation failure
+
+**Example validation error:**
+```
+Error: Config validation error: "JWT_SECRET_KEY" is required for authentication
+"VNP_HASH_SECRET" must be at least 32 characters long
+"MONGO_URI" must be a valid MongoDB connection string
+```
+
+The validation schema is defined in [server/src/config/env.validation.ts](server/src/config/env.validation.ts).
+
 ## 📚 API Documentation
 
 Once the server is running, API documentation is available at:

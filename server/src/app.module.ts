@@ -16,6 +16,7 @@ import { ProductModule } from './product/product.module';
 import { PaymentModule } from './payment/payment.module';
 import { CategoryModule } from './category/category.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { envValidationSchema } from './config/env.validation';
 
 @Module({
   imports: [
@@ -32,6 +33,11 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true,
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        allowUnknown: true, // Allow extra env vars not in schema
+        abortEarly: false, // Show all validation errors, not just first
+      },
     }),
     MongooseModule.forRoot(process.env.MONGO_URI!),
 
