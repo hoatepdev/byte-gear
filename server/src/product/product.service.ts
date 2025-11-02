@@ -9,8 +9,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Product, ProductDocument } from './product.schema';
+import { Product, ProductDocument, Comment, Reply } from './product.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import {
+  FindAllProductsParams,
+  FindRelatedProductsOptions,
+  PaginatedProductResponse,
+  ProductFilter,
+  ParsedAttributes,
+  ProductUpdateData,
+  TopSellingProduct,
+} from './types/product-service.types';
 
 @Injectable()
 export class ProductService {
@@ -48,7 +57,11 @@ export class ProductService {
     return product.save();
   }
 
-  async update(id: string, dto: UpdateProductDto, files: Express.Multer.File[]) {
+  async update(
+    id: string,
+    dto: UpdateProductDto,
+    files: Express.Multer.File[],
+  ) {
     let parsedAttributes: Record<string, any> | undefined;
     if (dto.attributes) {
       try {
@@ -74,8 +87,15 @@ export class ProductService {
       ...newImages.map((img) => img.secure_url),
     ];
 
-    const updateData: any = {
-      ...dto,
+    // Build update data with proper typing, excluding oldImages and attributes
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const {
+      oldImages: _oldImages,
+      attributes: _attributes,
+      ...dtoWithoutOldImages
+    } = dto;
+    const updateData: ProductUpdateData = {
+      ...dtoWithoutOldImages,
       images: updatedImages,
     };
 
@@ -95,16 +115,9 @@ export class ProductService {
     return updated;
   }
 
-  async findAll(params: {
-    page: number;
-    limit: number;
-    search?: string;
-    sortBy?: string;
-    fields?: string;
-    event?: string;
-    category?: string;
-    attributesRaw?: string;
-  }) {
+  async findAll(
+    params: FindAllProductsParams,
+  ): Promise<PaginatedProductResponse> {
     const {
       page,
       limit,
@@ -117,7 +130,7 @@ export class ProductService {
     } = params;
     const skip = (page - 1) * limit;
 
-    const attributes: Record<string, string[]> = {};
+    const attributes: ParsedAttributes = {};
     if (attributesRaw) {
       try {
         attributesRaw.split(';').forEach((entry) => {
@@ -129,7 +142,7 @@ export class ProductService {
       }
     }
 
-    const filter: any = {};
+    const filter: ProductFilter = {};
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -144,7 +157,7 @@ export class ProductService {
       filter[`attributes.${key}`] = { $in: values };
     });
 
-    let mongooseQuery = this.productModel.find(filter).lean<Product>();
+    let mongooseQuery = this.productModel.find(filter).lean<Product[]>();
 
     if (sortBy) {
       const sortFields = sortBy
@@ -175,20 +188,14 @@ export class ProductService {
 
   async findRelated(
     productId: string,
-    options: {
-      page: number;
-      limit: number;
-      search?: string;
-      sortBy?: string;
-      fields?: string;
-    },
-  ) {
+    options: FindRelatedProductsOptions,
+  ): Promise<PaginatedProductResponse | null> {
     const { page, limit, search, sortBy, fields } = options;
 
     const original = await this.productModel.findById(productId);
     if (!original) return null;
 
-    const query: any = {
+    const query: ProductFilter = {
       _id: { $ne: productId },
       category: original.category,
     };
@@ -322,13 +329,15 @@ export class ProductService {
     productId: string,
     commentId: string,
     userId: string,
-  ) {
+  ): Promise<Comment[]> {
     const product = await this.productModel.findById(productId);
     if (!product) throw new NotFoundException('Product not found');
 
-    const comment = product.comments.find(
-      (c: any) => c._id.toString() === commentId,
-    );
+    // Find comment using explicit type assertion for MongoDB document
+    const comment = product.comments.find((c) => {
+      const commentDoc = c as unknown as { _id: Types.ObjectId };
+      return commentDoc._id.toString() === commentId;
+    });
 
     if (!comment) throw new NotFoundException('Comment not found');
 
@@ -350,13 +359,15 @@ export class ProductService {
     userId: string,
     content: string,
     files: Express.Multer.File[],
-  ) {
+  ): Promise<Comment[]> {
     const product = await this.productModel.findById(productId);
     if (!product) throw new NotFoundException('Product not found');
 
-    const parentComment = product.comments.find(
-      (c: any) => c._id.toString() === parentCommentId,
-    );
+    // Find parent comment using explicit type assertion for MongoDB document
+    const parentComment = product.comments.find((c) => {
+      const commentDoc = c as unknown as { _id: Types.ObjectId };
+      return commentDoc._id.toString() === parentCommentId;
+    });
     if (!parentComment) throw new NotFoundException('Parent comment not found');
 
     let uploadedImages: string[] = [];
@@ -367,7 +378,7 @@ export class ProductService {
       uploadedImages = results.map((img) => img.secure_url);
     }
 
-    const reply = {
+    const reply: Reply = {
       _id: new Types.ObjectId().toString(),
       userId: userId,
       content,
@@ -392,7 +403,7 @@ export class ProductService {
     content: string,
     files: Express.Multer.File[],
     oldImages: string[] | string = [],
-  ) {
+  ): Promise<Comment | Reply> {
     const product = await this.productModel.findById(productId);
     if (!product) throw new NotFoundException('Product not found');
 
@@ -415,15 +426,24 @@ export class ProductService {
       uploadedImages = results.map((img) => img.secure_url);
     }
 
-    const updateCommentRecursively = (comments: any[]): any => {
+    const updateCommentRecursively = (
+      comments: Comment[] | Reply[],
+    ): Comment | Reply | null => {
       for (const c of comments) {
-        if (c._id.toString() === commentId && c.userId.toString() === userId) {
+        const commentDoc = c as unknown as {
+          _id: Types.ObjectId;
+          userId: Types.ObjectId;
+        };
+        if (
+          commentDoc._id.toString() === commentId &&
+          commentDoc.userId.toString() === userId
+        ) {
           c.content = content;
           c.images = [...parsedOldImages, ...uploadedImages];
           return c;
         }
-        if (c.replies?.length) {
-          const found = updateCommentRecursively(c.replies);
+        if ((c as Comment).replies?.length) {
+          const found = updateCommentRecursively((c as Comment).replies);
           if (found) return found;
         }
       }
@@ -437,25 +457,41 @@ export class ProductService {
     return updatedComment;
   }
 
-  async deleteComment(productId: string, commentId: string, userId: string) {
+  async deleteComment(
+    productId: string,
+    commentId: string,
+    userId: string,
+  ): Promise<Comment[]> {
     const product = await this.productModel.findById(productId);
     if (!product) throw new NotFoundException('Product not found');
 
     let found = false;
-    const commentIndex = product.comments.findIndex(
-      (c: any) =>
-        c._id.toString() === commentId && c.userId.toString() === userId,
-    );
+    const commentIndex = product.comments.findIndex((c) => {
+      const commentDoc = c as unknown as {
+        _id: Types.ObjectId;
+        userId: Types.ObjectId;
+      };
+      return (
+        commentDoc._id.toString() === commentId &&
+        commentDoc.userId.toString() === userId
+      );
+    });
 
     if (commentIndex !== -1) {
       product.comments.splice(commentIndex, 1);
       found = true;
     } else {
       for (const comment of product.comments) {
-        const replyIndex = comment.replies.findIndex(
-          (r: any) =>
-            r._id.toString() === commentId && r.userId.toString() === userId,
-        );
+        const replyIndex = comment.replies.findIndex((r) => {
+          const replyDoc = r as unknown as {
+            _id: Types.ObjectId;
+            userId: Types.ObjectId;
+          };
+          return (
+            replyDoc._id.toString() === commentId &&
+            replyDoc.userId.toString() === userId
+          );
+        });
         if (replyIndex !== -1) {
           comment.replies.splice(replyIndex, 1);
           found = true;
@@ -480,12 +516,12 @@ export class ProductService {
     return product.comments;
   }
 
-  async getTopSellingProduct() {
+  async getTopSellingProduct(): Promise<TopSellingProduct | null> {
     const product = await this.productModel
       .findOne({ soldQuantity: { $gt: 0 } })
       .sort({ soldQuantity: -1 })
       .select('name images soldQuantity')
-      .lean();
+      .lean<TopSellingProduct>();
 
     if (!product) return null;
 

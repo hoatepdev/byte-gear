@@ -15,10 +15,12 @@ import {
 import {
   ApiTags,
   ApiBody,
-  ApiQuery,
   ApiParam,
   ApiConsumes,
   ApiBearerAuth,
+  ApiOperation,
+  ApiOkResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -37,6 +39,11 @@ import { QueryProductDto } from './dto/query-product.dto';
 import { QueryRelatedProductDto } from './dto/query-related-product.dto';
 import { ReplyCommentDto } from './dto/reply-comment.dto';
 import { EditCommentDto } from './dto/edit-comment.dto';
+import {
+  ProductResponseDto,
+  PaginatedProductResponseDto,
+  ProductDeleteResponseDto,
+} from './dto/product-response.dto';
 
 @ApiTags('Products')
 @Controller('products')
@@ -47,10 +54,18 @@ export class ProductController {
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN)
   @UseGuards(JwtGuard, RolesGuard)
+  @ApiOperation({ summary: 'Create new product (Admin only)' })
   @ApiConsumes('multipart/form-data')
+  @ApiCreatedResponse({
+    description: 'Product created successfully',
+    type: ProductResponseDto,
+  })
   @UseInterceptors(FilesInterceptor('images', 10, { storage: memoryStorage() }))
   @ApiBody({ type: CreateProductDto })
-  create(@Body() dto: CreateProductDto, @UploadedFiles() files: Express.Multer.File[]) {
+  create(
+    @Body() dto: CreateProductDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
     return this.productService.create(dto, files);
   }
 
@@ -58,8 +73,13 @@ export class ProductController {
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN)
   @UseGuards(JwtGuard, RolesGuard)
+  @ApiOperation({ summary: 'Update product (Admin only)' })
   @ApiConsumes('multipart/form-data')
-  @ApiParam({ name: 'id', required: true })
+  @ApiParam({ name: 'id', required: true, description: 'Product ID' })
+  @ApiOkResponse({
+    description: 'Product updated successfully',
+    type: ProductResponseDto,
+  })
   @UseInterceptors(FilesInterceptor('images', 10, { storage: memoryStorage() }))
   @ApiBody({ type: UpdateProductDto })
   update(
@@ -71,6 +91,11 @@ export class ProductController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all products with filtering and pagination' })
+  @ApiOkResponse({
+    description: 'Products retrieved successfully',
+    type: PaginatedProductResponseDto,
+  })
   async findAll(@Query() query: QueryProductDto) {
     return this.productService.findAll({
       page: query.page || 1,
@@ -85,11 +110,13 @@ export class ProductController {
   }
 
   @Get('related/:id')
-  @ApiParam({ name: 'id', required: true })
-  findRelated(
-    @Param('id') id: string,
-    @Query() query: QueryRelatedProductDto,
-  ) {
+  @ApiOperation({ summary: 'Get related products by product ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Product ID' })
+  @ApiOkResponse({
+    description: 'Related products retrieved successfully',
+    type: PaginatedProductResponseDto,
+  })
+  findRelated(@Param('id') id: string, @Query() query: QueryRelatedProductDto) {
     return this.productService.findRelated(id, {
       page: query.page || 1,
       limit: query.limit || 10,
@@ -100,13 +127,23 @@ export class ProductController {
   }
 
   @Get('slug/:slug')
-  @ApiParam({ name: 'slug', required: true })
+  @ApiOperation({ summary: 'Get product by slug' })
+  @ApiParam({ name: 'slug', required: true, description: 'Product slug' })
+  @ApiOkResponse({
+    description: 'Product retrieved successfully',
+    type: ProductResponseDto,
+  })
   findBySlug(@Param('slug') slug: string) {
     return this.productService.findBySlug(slug);
   }
 
   @Get(':id')
-  @ApiParam({ name: 'id', required: true })
+  @ApiOperation({ summary: 'Get product by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Product ID' })
+  @ApiOkResponse({
+    description: 'Product retrieved successfully',
+    type: ProductResponseDto,
+  })
   findOne(@Param('id') id: string) {
     return this.productService.findOne(id);
   }
@@ -115,7 +152,12 @@ export class ProductController {
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN)
   @UseGuards(JwtGuard, RolesGuard)
-  @ApiParam({ name: 'id', required: true })
+  @ApiOperation({ summary: 'Delete product (Admin only)' })
+  @ApiParam({ name: 'id', required: true, description: 'Product ID' })
+  @ApiOkResponse({
+    description: 'Product deleted successfully',
+    type: ProductDeleteResponseDto,
+  })
   delete(@Param('id') id: string) {
     return this.productService.delete(id);
   }
