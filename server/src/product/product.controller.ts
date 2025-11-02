@@ -12,6 +12,7 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import {
   ApiTags,
   ApiBody,
@@ -186,7 +187,7 @@ export class ProductController {
     @Param('id') productId: string,
     @Body() dto: CreateCommentDto,
     @UploadedFiles() files: Express.Multer.File[],
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     const userId = req.user.id;
     return this.productService.comment(productId, userId, dto, files);
@@ -198,7 +199,7 @@ export class ProductController {
   async toggleLikeComment(
     @Param('productId') productId: string,
     @Param('commentId') commentId: string,
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     const userId = req.user.id;
     return this.productService.toggleLikeComment(productId, commentId, userId);
@@ -215,7 +216,7 @@ export class ProductController {
     @Param('commentId') parentCommentId: string,
     @Body() dto: ReplyCommentDto,
     @UploadedFiles() files: Express.Multer.File[],
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     const userId = req.user.id;
     return this.productService.replyComment(
@@ -238,7 +239,7 @@ export class ProductController {
     @Param('commentId') commentId: string,
     @Body() dto: EditCommentDto,
     @UploadedFiles() files: Express.Multer.File[],
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     const userId = req.user.id;
     return this.productService.editComment(
@@ -259,7 +260,7 @@ export class ProductController {
   async deleteComment(
     @Param('productId') productId: string,
     @Param('commentId') commentId: string,
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
   ) {
     const userId = req.user.id;
     return this.productService.deleteComment(productId, commentId, userId);

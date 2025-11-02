@@ -9,6 +9,7 @@ import {
   UseGuards,
   Controller,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import {
   ApiBody,
   ApiTags,
@@ -37,7 +38,7 @@ export class OrderController {
   @Roles(UserRole.CUSTOMER)
   @UseGuards(JwtGuard, RolesGuard)
   @ApiBody({ type: CreateOrderDto })
-  create(@Body() dto: CreateOrderDto, @Request() req) {
+  create(@Body() dto: CreateOrderDto, @Request() req: ExpressRequest & { user: { id: string } }) {
     return this.orderService.create(dto, req.user.id);
   }
 
@@ -63,7 +64,7 @@ export class OrderController {
   })
   @ApiQuery({ name: 'orderStatus', required: false, type: String })
   findMyOrders(
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,

@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import {
   ApiBody,
   ApiParam,
@@ -50,7 +51,7 @@ export class UserController {
   @Get('me')
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
-  getMe(@Request() req) {
+  getMe(@Request() req: ExpressRequest & { user: { id: string } }) {
     return this.userService.getMe(req.user.id);
   }
 

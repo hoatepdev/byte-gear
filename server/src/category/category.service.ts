@@ -37,7 +37,7 @@ export class CategoryService {
       let options = field.options;
 
       if (field.type === 'number' && options) {
-        options = options.map((opt) => Number(opt));
+        options = options.map((opt: string | number) => Number(opt));
       }
 
       return {
@@ -144,7 +144,7 @@ export class CategoryService {
     const normalizedFields = fields?.map((field) => {
       let options = field.options;
       if (field.type === 'number' && options) {
-        options = options.map((opt) => Number(opt));
+        options = options.map((opt: string | number) => Number(opt));
       }
       return {
         ...field,

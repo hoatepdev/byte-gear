@@ -179,18 +179,18 @@ export class OrderService {
       if (dateTo) query.createdAt.$lte = new Date(dateTo);
     }
 
-    let projection: any = {};
+    let projection: Record<string, number> = {};
     if (fields) {
       projection = fields.split(',').reduce((acc, field) => {
         acc[field.trim()] = 1;
         return acc;
-      }, {});
+      }, {} as Record<string, number>);
     }
 
     const total = await this.orderModel.countDocuments(query);
 
     const data = await this.orderModel
-      .find(query, projection)
+      .find(query, Object.keys(projection).length > 0 ? (projection as any) : undefined)
       .populate({ path: 'userId', select: 'email avatarUrl' })
       .populate({ path: 'items.productId', select: '-description' })
       .sort(sortBy)

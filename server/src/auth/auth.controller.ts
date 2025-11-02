@@ -8,6 +8,7 @@ import {
   UseGuards,
   Controller,
 } from '@nestjs/common';
+import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { ApiBearerAuth, ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
@@ -32,7 +33,7 @@ export class AuthController {
   @UseGuards(LocalGuard)
   @ApiBody({ type: LoginDto })
   @Throttle({ short: { limit: 3, ttl: 60000 } }) // 3 attempts per minute to prevent brute force
-  login(@Request() req) {
+  login(@Request() req: ExpressRequest & { user: { id: string } }) {
     return this.authService.login(req.user.id);
   }
 
@@ -49,7 +50,10 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(GoogleOauthGuard)
-  async googleCallback(@Request() req, @Response() res) {
+  async googleCallback(
+    @Request() req: ExpressRequest & { user: { _id: string } },
+    @Response() res: ExpressResponse,
+  ) {
     const { accessToken, refreshToken } = await this.authService.login(
       req.user._id,
     );
@@ -81,13 +85,13 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(RefreshJwtGuard)
   @ApiBearerAuth()
-  refreshToken(@Request() req) {
+  refreshToken(@Request() req: ExpressRequest & { user: { id: string } }) {
     return this.authService.refreshToken(req.user.id);
   }
 
   @Post('logout')
   @UseGuards(JwtGuard)
-  logout(@Request() req) {
+  logout(@Request() req: ExpressRequest & { user: { id: string } }) {
     return this.authService.logout(req.user.id);
   }
 }

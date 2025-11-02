@@ -16,7 +16,7 @@ export class CloudinaryService {
           folder,
           resource_type: 'image',
         },
-        (error, result) => {
+        (error: Error | undefined, result: UploadApiResponse | undefined) => {
           if (error) return reject(error);
           resolve(result as UploadApiResponse);
         },
